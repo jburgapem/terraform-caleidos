@@ -1,92 +1,45 @@
-name: Deploy Multi-Region EKS
+name: Infra & Deploy
 
 on:
   push:
     branches:
       - main
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write   # 👈 necesario para OIDC
-      contents: read
-    env:
-      PRIMARY_REGION: us-east-1
-      SECONDARY_REGION: us-west-2
-      CLUSTER_PRIMARY: acme-eks-primary
-      CLUSTER_SECONDARY: acme-eks-secondary
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::351247743848:role/GitHubOIDCRole
-          aws-region: ${{ env.PRIMARY_REGION }}
-
-      - name: Debug AWS Identity
-        run: aws sts get-caller-identity
-
-      - name: Debug - List clusters
-        run: |
-          echo "Clusters in PRIMARY region ($PRIMARY_REGION):"
-          aws eks list-clusters --region $PRIMARY_REGION
-          echo "Clusters in SECONDARY region ($SECONDARY_REGION):"
-          aws eks list-clusters --region $SECONDARY_REGION
-
-      - name: Setup kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: 'latest'
-
-      - name: Update kubeconfig for primary (if exists)
-        run: |
-          if aws eks describe-cluster --region $PRIMARY_REGION --name $CLUSTER_PRIMARY >/dev/null 2>&1; then
-            echo "Cluster $CLUSTER_PRIMARY found in $PRIMARY_REGION. Updating kubeconfig..."
-            aws eks update-kubeconfig --region $PRIMARY_REGION --name $CLUSTER_PRIMARY
-            kubectl apply -f terraform/nginx-deployment.yaml
-            kubectl get pods -n default -o wide
-          else
-            echo "Cluster $CLUSTER_PRIMARY not found in $PRIMARY_REGION. Skipping."
-          fi
-
-      - name: Update kubeconfig for secondary (if exists)
-        run: |
-          if aws eks describe-cluster --region $SECONDARY_REGION --name $CLUSTER_SECONDARY >/dev/null 2>&1; then
-            echo "Cluster $CLUSTER_SECONDARY found in $SECONDARY_REGION. Updating kubeconfig..."
-            aws eks update-kubeconfig --region $SECONDARY_REGION --name $CLUSTER_SECONDARY
-            kubectl apply -f terraform/nginx-deployment.yaml
-            kubectl get pods -n default -o wide
-          else
-            echo "Cluster $CLUSTER_SECONDARY not found in $SECONDARY_REGION. Skipping."
-          fi
-name: Deploy Terraform Infrastructure
-on:
-  push:
-    branches:
-      - main
 jobs:
   terraform:
     runs-on: ubuntu-latest
     env:
       TF_WORKING_DIR: terraform
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
-      - name: Terraform Init
-        run: terraform -chdir=${{ env.TF_WORKING_DIR }} init
-      - name: Terraform Plan
-        run: terraform -chdir=${{ env.TF_WORKING_DIR }} plan
-      - name: Terraform Apply
-        run: terraform -chdir=${{ env.TF_WORKING_DIR }} apply -auto-approve
+      - run: terraform -chdir=${{ env.TF_WORKING_DIR }} init
+      - run: terraform -chdir=${{ env.TF_WORKING_DIR }} apply -auto-approve
+
+  deploy:
+    needs: terraform   # 👈 se ejecuta solo si terraform termina bien
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      PRIMARY_REGION: us-east-1
+      SECONDARY_REGION: us-west-2
+      CLUSTER_PRIMARY: acme-eks-primary
+      CLUSTER_SECONDARY: acme-eks-secondary
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::351247743848:role/GitHubOIDCRole
+          aws-region: ${{ env.PRIMARY_REGION }}
+      - uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+      - run: aws eks update-kubeconfig --region $PRIMARY_REGION --name $CLUSTER_PRIMARY
+      - run: kubectl apply -f terraform/nginx-deployment.yaml
