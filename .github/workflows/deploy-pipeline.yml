@@ -15,7 +15,7 @@ jobs:
     env:
       PRIMARY_REGION: us-east-1
       SECONDARY_REGION: us-west-2
-      TF_WORKING_DIR: .  # asumiendo que tu Terraform está en la raíz
+      TF_WORKING_DIR: .  # Terraform en la raíz
       CLUSTER_NAME: acme-eks
 
     steps:
@@ -73,14 +73,24 @@ jobs:
         with:
           version: 'latest'
 
-      - name: Update kubeconfig for primary
+      - name: Deploy to primary if cluster exists
         run: |
-          aws eks update-kubeconfig --region $PRIMARY_REGION --name $CLUSTER_PRIMARY
-          kubectl apply -f terraform/nginx-deployment.yaml
-          kubectl get pods -n default -o wide
+          if aws eks describe-cluster --region $PRIMARY_REGION --name $CLUSTER_PRIMARY >/dev/null 2>&1; then
+            echo "Cluster $CLUSTER_PRIMARY exists in $PRIMARY_REGION. Updating kubeconfig..."
+            aws eks update-kubeconfig --region $PRIMARY_REGION --name $CLUSTER_PRIMARY
+            kubectl apply -f terraform/nginx-deployment.yaml
+            kubectl get pods -n default -o wide
+          else
+            echo "Cluster $CLUSTER_PRIMARY not found. Skipping deployment."
+          fi
 
-      - name: Update kubeconfig for secondary
+      - name: Deploy to secondary if cluster exists
         run: |
-          aws eks update-kubeconfig --region $SECONDARY_REGION --name $CLUSTER_SECONDARY
-          kubectl apply -f terraform/nginx-deployment.yaml
-          kubectl get pods -n default -o wide
+          if aws eks describe-cluster --region $SECONDARY_REGION --name $CLUSTER_SECONDARY >/dev/null 2>&1; then
+            echo "Cluster $CLUSTER_SECONDARY exists in $SECONDARY_REGION. Updating kubeconfig..."
+            aws eks update-kubeconfig --region $SECONDARY_REGION --name $CLUSTER_SECONDARY
+            kubectl apply -f terraform/nginx-deployment.yaml
+            kubectl get pods -n default -o wide
+          else
+            echo "Cluster $CLUSTER_SECONDARY not found. Skipping deployment."
+          fi
