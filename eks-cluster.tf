@@ -8,9 +8,10 @@ module "eks_primary" {
   vpc_id          = aws_vpc.primary.id
   subnet_ids      = [aws_subnet.primary_private.id]
 
-  # 🔧 Desactivar recursos que ya existen
+  # 🔧 Desactivar creación automática de recursos conflictivos
   create_cloudwatch_log_group = false
-  kms_key_enable_default      = false
+  create_kms_key              = false
+  attach_cluster_encryption_policy = false
 
   eks_managed_node_groups = {
     default = {
@@ -32,9 +33,10 @@ module "eks_secondary" {
   vpc_id          = aws_vpc.secondary.id
   subnet_ids      = [aws_subnet.secondary_private.id]
 
-  # 🔧 Desactivar recursos que ya existen
+  # 🔧 Desactivar creación automática de recursos conflictivos
   create_cloudwatch_log_group = false
-  kms_key_enable_default      = false
+  create_kms_key              = false
+  attach_cluster_encryption_policy = false
 
   eks_managed_node_groups = {
     default = {
