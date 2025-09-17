@@ -5,32 +5,39 @@ on:
     branches:
       - main
 
+env:
+  PRIMARY_REGION: us-east-1
+  SECONDARY_REGION: us-west-2
+  CLUSTER_NAME: acme-eks
+  PRIMARY_VPC_ID: vpc-xxxxxxxx
+  PRIMARY_PRIVATE_SUBNETS: '["subnet-aaaaaaa","subnet-bbbbbbb"]'
+  SECONDARY_VPC_ID: vpc-yyyyyyyy
+  SECONDARY_PRIVATE_SUBNETS: '["subnet-ccccccc","subnet-ddddddd"]'
+
 jobs:
   terraform:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write   # necesario para OIDC
+      id-token: write
       contents: read
-    env:
-      PRIMARY_REGION: us-east-1
-      SECONDARY_REGION: us-west-2
-      PRIMARY_VPC_ID: ${{ secrets.PRIMARY_VPC_ID }}
-      PRIMARY_PRIVATE_SUBNETS: ${{ secrets.PRIMARY_PRIVATE_SUBNETS }}   # JSON array
-      SECONDARY_VPC_ID: ${{ secrets.SECONDARY_VPC_ID }}
-      SECONDARY_PRIVATE_SUBNETS: ${{ secrets.SECONDARY_PRIVATE_SUBNETS }} # JSON array
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials via OIDC for primary
+      - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::351247743848:role/GitHubOIDCRole
           aws-region: ${{ env.PRIMARY_REGION }}
 
+      - name: Debug AWS Identity
+        run: aws sts get-caller-identity
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.6
 
       - name: Terraform Init
         run: terraform init
@@ -42,7 +49,9 @@ jobs:
             -var "primary_private_subnets=${{ env.PRIMARY_PRIVATE_SUBNETS }}" \
             -var "secondary_vpc_id=${{ env.SECONDARY_VPC_ID }}" \
             -var "secondary_private_subnets=${{ env.SECONDARY_PRIVATE_SUBNETS }}" \
+            -var "cluster_name=${{ env.CLUSTER_NAME }}" \
             -out=tfplan
 
       - name: Terraform Apply
-        run: terraform apply -input=false -auto-approve tfplan
+        run: |
+          terraform apply -auto-approve tfplan
