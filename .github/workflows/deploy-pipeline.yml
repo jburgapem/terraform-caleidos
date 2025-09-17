@@ -1,34 +1,54 @@
 name: Deploy Multi-Region EKS
+
 on:
   push:
     branches:
       - main
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # 👈 necesario para OIDC
+      contents: read
     env:
       PRIMARY_REGION: us-east-1
       SECONDARY_REGION: us-west-2
       CLUSTER_PRIMARY: acme-eks-primary
       CLUSTER_SECONDARY: acme-eks-secondary
+
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::351247743848:role/GitHubOIDCRole   # 👈 Usa el ARN del rol, no del provider
+          aws-region: ${{ env.PRIMARY_REGION }}
+
+      - name: Debug AWS Identity
+        run: aws sts get-caller-identity
+
       - name: Setup kubectl
         uses: azure/setup-kubectl@v3
         with:
           version: 'latest'
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.PRIMARY_REGION }}
+
       - name: Update kubeconfig for primary
         run: aws eks --region $PRIMARY_REGION update-kubeconfig --name $CLUSTER_PRIMARY
+
       - name: Deploy nginx to primary
         run: kubectl apply -f terraform/nginx-deployment.yaml
+
+      - name: Verify nginx in primary
+        run: kubectl get pods -n default -o wide
+
       - name: Update kubeconfig for secondary
         run: aws eks --region $SECONDARY_REGION update-kubeconfig --name $CLUSTER_SECONDARY
+
       - name: Deploy nginx to secondary
         run: kubectl apply -f terraform/nginx-deployment.yaml
+
+      - name: Verify nginx in secondary
+        run: kubectl get pods -n default -o wide
