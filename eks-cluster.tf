@@ -8,9 +8,9 @@ module "eks_primary" {
   vpc_id          = aws_vpc.primary.id
   subnet_ids      = [aws_subnet.primary_private.id]
 
-  # 🔧 Correcciones
   create_cloudwatch_log_group = false
-  create_kms_key              = false   # 👈 evita el error de KMS
+  create_kms_key              = false
+  cluster_encryption_config   = {}   # 👈 desactiva encryption
 
   eks_managed_node_groups = {
     default = {
@@ -32,9 +32,9 @@ module "eks_secondary" {
   vpc_id          = aws_vpc.secondary.id
   subnet_ids      = [aws_subnet.secondary_private.id]
 
-  # 🔧 Correcciones
   create_cloudwatch_log_group = false
-  create_kms_key              = false   # 👈 evita el error de KMS
+  create_kms_key              = false
+  cluster_encryption_config   = {}   # 👈 desactiva encryption
 
   eks_managed_node_groups = {
     default = {
