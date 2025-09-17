@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  deploy:
+  terraform:
     runs-on: ubuntu-latest
     permissions:
       id-token: write   # necesario para OIDC
@@ -15,14 +15,13 @@ jobs:
     env:
       PRIMARY_REGION: us-east-1
       SECONDARY_REGION: us-west-2
-      TF_WORKING_DIR: .
+      TF_WORKING_DIR: .  # asumiendo que tu Terraform está en la raíz
+      CLUSTER_NAME: acme-eks
 
     steps:
-      # ------------------------------
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      # ------------------------------
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -32,45 +31,56 @@ jobs:
       - name: Debug AWS Identity
         run: aws sts get-caller-identity
 
-      # ------------------------------
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.6.0"
 
       - name: Terraform Init
-        run: terraform -chdir=${{ env.TF_WORKING_DIR }} init
+        run: terraform -chdir=${{ env.TF_WORKING_DIR }} init -input=false
 
       - name: Terraform Plan
-        run: terraform -chdir=${{ env.TF_WORKING_DIR }} plan
+        run: terraform -chdir=${{ env.TF_WORKING_DIR }} plan -input=false
 
       - name: Terraform Apply
         run: terraform -chdir=${{ env.TF_WORKING_DIR }} apply -auto-approve
 
-      # ------------------------------
+  deploy_k8s:
+    runs-on: ubuntu-latest
+    needs: terraform
+    permissions:
+      id-token: write
+      contents: read
+
+    env:
+      PRIMARY_REGION: us-east-1
+      SECONDARY_REGION: us-west-2
+      CLUSTER_PRIMARY: acme-eks-primary
+      CLUSTER_SECONDARY: acme-eks-secondary
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::351247743848:role/GitHubOIDCRole
+          aws-region: ${{ env.PRIMARY_REGION }}
+
       - name: Setup kubectl
         uses: azure/setup-kubectl@v3
         with:
           version: 'latest'
 
-      # ------------------------------
-      - name: Update kubeconfig for primary cluster
+      - name: Update kubeconfig for primary
         run: |
-          aws eks update-kubeconfig \
-            --region $PRIMARY_REGION \
-            --name acme-eks-primary
-
-      - name: Deploy Nginx to primary cluster
-        run: |
+          aws eks update-kubeconfig --region $PRIMARY_REGION --name $CLUSTER_PRIMARY
           kubectl apply -f terraform/nginx-deployment.yaml
           kubectl get pods -n default -o wide
 
-      # ------------------------------
-      - name: Update kubeconfig for secondary cluster
+      - name: Update kubeconfig for secondary
         run: |
-          aws eks update-kubeconfig \
-            --region $SECONDARY_REGION \
-            --name acme-eks-secondary
-
-      - name: Deploy Nginx to secondary cluster
-        run: |
+          aws eks update-kubeconfig --region $SECONDARY_REGION --name $CLUSTER_SECONDARY
           kubectl apply -f terraform/nginx-deployment.yaml
           kubectl get pods -n default -o wide
