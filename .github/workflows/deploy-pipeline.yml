@@ -11,86 +11,38 @@ jobs:
     permissions:
       id-token: write   # necesario para OIDC
       contents: read
-
     env:
       PRIMARY_REGION: us-east-1
       SECONDARY_REGION: us-west-2
-      TF_WORKING_DIR: .  # Terraform en la raíz
-      CLUSTER_NAME: acme-eks
+      PRIMARY_VPC_ID: ${{ secrets.PRIMARY_VPC_ID }}
+      PRIMARY_PRIVATE_SUBNETS: ${{ secrets.PRIMARY_PRIVATE_SUBNETS }}   # JSON array
+      SECONDARY_VPC_ID: ${{ secrets.SECONDARY_VPC_ID }}
+      SECONDARY_PRIVATE_SUBNETS: ${{ secrets.SECONDARY_PRIVATE_SUBNETS }} # JSON array
 
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials via OIDC
+      - name: Configure AWS credentials via OIDC for primary
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::351247743848:role/GitHubOIDCRole
           aws-region: ${{ env.PRIMARY_REGION }}
-
-      - name: Debug AWS Identity
-        run: aws sts get-caller-identity
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: "1.6.0"
 
       - name: Terraform Init
-        run: terraform -chdir=${{ env.TF_WORKING_DIR }} init -input=false
+        run: terraform init
 
       - name: Terraform Plan
-        run: terraform -chdir=${{ env.TF_WORKING_DIR }} plan -input=false
+        run: |
+          terraform plan \
+            -var "primary_vpc_id=${{ env.PRIMARY_VPC_ID }}" \
+            -var "primary_private_subnets=${{ env.PRIMARY_PRIVATE_SUBNETS }}" \
+            -var "secondary_vpc_id=${{ env.SECONDARY_VPC_ID }}" \
+            -var "secondary_private_subnets=${{ env.SECONDARY_PRIVATE_SUBNETS }}" \
+            -out=tfplan
 
       - name: Terraform Apply
-        run: terraform -chdir=${{ env.TF_WORKING_DIR }} apply -auto-approve
-
-  deploy_k8s:
-    runs-on: ubuntu-latest
-    needs: terraform
-    permissions:
-      id-token: write
-      contents: read
-
-    env:
-      PRIMARY_REGION: us-east-1
-      SECONDARY_REGION: us-west-2
-      CLUSTER_PRIMARY: acme-eks-primary
-      CLUSTER_SECONDARY: acme-eks-secondary
-
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::351247743848:role/GitHubOIDCRole
-          aws-region: ${{ env.PRIMARY_REGION }}
-
-      - name: Setup kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: 'latest'
-
-      - name: Deploy to primary if cluster exists
-        run: |
-          if aws eks describe-cluster --region $PRIMARY_REGION --name $CLUSTER_PRIMARY >/dev/null 2>&1; then
-            echo "Cluster $CLUSTER_PRIMARY exists in $PRIMARY_REGION. Updating kubeconfig..."
-            aws eks update-kubeconfig --region $PRIMARY_REGION --name $CLUSTER_PRIMARY
-            kubectl apply -f terraform/nginx-deployment.yaml
-            kubectl get pods -n default -o wide
-          else
-            echo "Cluster $CLUSTER_PRIMARY not found. Skipping deployment."
-          fi
-
-      - name: Deploy to secondary if cluster exists
-        run: |
-          if aws eks describe-cluster --region $SECONDARY_REGION --name $CLUSTER_SECONDARY >/dev/null 2>&1; then
-            echo "Cluster $CLUSTER_SECONDARY exists in $SECONDARY_REGION. Updating kubeconfig..."
-            aws eks update-kubeconfig --region $SECONDARY_REGION --name $CLUSTER_SECONDARY
-            kubectl apply -f terraform/nginx-deployment.yaml
-            kubectl get pods -n default -o wide
-          else
-            echo "Cluster $CLUSTER_SECONDARY not found. Skipping deployment."
-          fi
+        run: terraform apply -input=false -auto-approve tfplan
