@@ -1,4 +1,4 @@
-name: Infra & Deploy EKS
+name: Deploy Multi-Region EKS with Terraform
 
 on:
   push:
@@ -6,50 +6,23 @@ on:
       - main
 
 jobs:
-  terraform:
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write    # 👈 necesario para OIDC
-      contents: read
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::351247743848:role/GitHubOIDCRole
-          aws-region: us-east-1
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Plan
-        run: terraform plan
-
-      - name: Terraform Apply
-        run: terraform apply -auto-approve
-
   deploy:
-    needs: terraform    # 👈 se ejecuta solo si terraform termina bien
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
+      id-token: write   # necesario para OIDC
       contents: read
+
     env:
       PRIMARY_REGION: us-east-1
       SECONDARY_REGION: us-west-2
-      CLUSTER_PRIMARY: acme-eks-primary
-      CLUSTER_SECONDARY: acme-eks-secondary
+      TF_WORKING_DIR: .
 
     steps:
-      - name: Checkout
+      # ------------------------------
+      - name: Checkout code
         uses: actions/checkout@v4
 
+      # ------------------------------
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -59,32 +32,45 @@ jobs:
       - name: Debug AWS Identity
         run: aws sts get-caller-identity
 
-      - name: Debug - List clusters
-        run: |
-          aws eks list-clusters --region $PRIMARY_REGION
-          aws eks list-clusters --region $SECONDARY_REGION
+      # ------------------------------
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
 
+      - name: Terraform Init
+        run: terraform -chdir=${{ env.TF_WORKING_DIR }} init
+
+      - name: Terraform Plan
+        run: terraform -chdir=${{ env.TF_WORKING_DIR }} plan
+
+      - name: Terraform Apply
+        run: terraform -chdir=${{ env.TF_WORKING_DIR }} apply -auto-approve
+
+      # ------------------------------
       - name: Setup kubectl
         uses: azure/setup-kubectl@v3
         with:
           version: 'latest'
 
-      - name: Deploy to primary (if exists)
+      # ------------------------------
+      - name: Update kubeconfig for primary cluster
         run: |
-          if aws eks describe-cluster --region $PRIMARY_REGION --name $CLUSTER_PRIMARY >/dev/null 2>&1; then
-            aws eks update-kubeconfig --region $PRIMARY_REGION --name $CLUSTER_PRIMARY
-            kubectl apply -f nginx-deployment.yaml
-            kubectl get pods -n default -o wide
-          else
-            echo "Cluster $CLUSTER_PRIMARY not found."
-          fi
+          aws eks update-kubeconfig \
+            --region $PRIMARY_REGION \
+            --name acme-eks-primary
 
-      - name: Deploy to secondary (if exists)
+      - name: Deploy Nginx to primary cluster
         run: |
-          if aws eks describe-cluster --region $SECONDARY_REGION --name $CLUSTER_SECONDARY >/dev/null 2>&1; then
-            aws eks update-kubeconfig --region $SECONDARY_REGION --name $CLUSTER_SECONDARY
-            kubectl apply -f nginx-deployment.yaml
-            kubectl get pods -n default -o wide
-          else
-            echo "Cluster $CLUSTER_SECONDARY not found."
-          fi
+          kubectl apply -f terraform/nginx-deployment.yaml
+          kubectl get pods -n default -o wide
+
+      # ------------------------------
+      - name: Update kubeconfig for secondary cluster
+        run: |
+          aws eks update-kubeconfig \
+            --region $SECONDARY_REGION \
+            --name acme-eks-secondary
+
+      - name: Deploy Nginx to secondary cluster
+        run: |
+          kubectl apply -f terraform/nginx-deployment.yaml
+          kubectl get pods -n default -o wide
