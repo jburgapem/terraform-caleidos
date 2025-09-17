@@ -11,8 +11,6 @@ jobs:
     permissions:
       id-token: write    # 👈 necesario para OIDC
       contents: read
-    env:
-      TF_WORKING_DIR: terraform
 
     steps:
       - name: Checkout code
@@ -28,19 +26,19 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        run: terraform -chdir=${{ env.TF_WORKING_DIR }} init
+        run: terraform init
 
       - name: Terraform Plan
-        run: terraform -chdir=${{ env.TF_WORKING_DIR }} plan
+        run: terraform plan
 
       - name: Terraform Apply
-        run: terraform -chdir=${{ env.TF_WORKING_DIR }} apply -auto-approve
+        run: terraform apply -auto-approve
 
   deploy:
     needs: terraform    # 👈 se ejecuta solo si terraform termina bien
     runs-on: ubuntu-latest
     permissions:
-      id-token: write   # 👈 necesario para OIDC
+      id-token: write
       contents: read
     env:
       PRIMARY_REGION: us-east-1
@@ -75,7 +73,7 @@ jobs:
         run: |
           if aws eks describe-cluster --region $PRIMARY_REGION --name $CLUSTER_PRIMARY >/dev/null 2>&1; then
             aws eks update-kubeconfig --region $PRIMARY_REGION --name $CLUSTER_PRIMARY
-            kubectl apply -f terraform/nginx-deployment.yaml
+            kubectl apply -f nginx-deployment.yaml
             kubectl get pods -n default -o wide
           else
             echo "Cluster $CLUSTER_PRIMARY not found."
@@ -85,7 +83,7 @@ jobs:
         run: |
           if aws eks describe-cluster --region $SECONDARY_REGION --name $CLUSTER_SECONDARY >/dev/null 2>&1; then
             aws eks update-kubeconfig --region $SECONDARY_REGION --name $CLUSTER_SECONDARY
-            kubectl apply -f terraform/nginx-deployment.yaml
+            kubectl apply -f nginx-deployment.yaml
             kubectl get pods -n default -o wide
           else
             echo "Cluster $CLUSTER_SECONDARY not found."
