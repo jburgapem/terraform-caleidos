@@ -48,3 +48,6 @@ jobs:
 
       - name: Verify nginx in secondary
         run: kubectl get pods -n default -o wide
+
+      - name: Verify nginx in secondary
+        run: kubectl get pods -n default -o wide
