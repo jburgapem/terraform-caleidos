@@ -1,3 +1,8 @@
+##########################
+# EKS Multi-Region Setup #
+##########################
+
+# Módulo EKS primario
 module "eks_primary" {
   source          = "terraform-aws-modules/eks/aws"
   version         = "20.13.0"
@@ -18,12 +23,14 @@ module "eks_primary" {
     }
   }
 
+  # Configuración para evitar errores de KMS y logs
   create_kms_key            = false
   cluster_log_group_enabled = false
   manage_aws_auth           = true
   enable_irsa               = true
 }
 
+# Módulo EKS secundario
 module "eks_secondary" {
   source          = "terraform-aws-modules/eks/aws"
   version         = "20.13.0"
@@ -43,3 +50,9 @@ module "eks_secondary" {
       instance_types = ["t3.medium"]
     }
   }
+
+  create_kms_key            = false
+  cluster_log_group_enabled = false
+  manage_aws_auth           = true
+  enable_irsa               = true
+}
