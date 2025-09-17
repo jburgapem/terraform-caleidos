@@ -24,31 +24,42 @@ jobs:
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::351247743848:role/GitHubOIDCRole   # 👈 Usa el ARN del rol, no del provider
+          role-to-assume: arn:aws:iam::351247743848:role/GitHubOIDCRole
           aws-region: ${{ env.PRIMARY_REGION }}
 
       - name: Debug AWS Identity
         run: aws sts get-caller-identity
+
+      - name: Debug - List clusters
+        run: |
+          echo "Clusters in PRIMARY region ($PRIMARY_REGION):"
+          aws eks list-clusters --region $PRIMARY_REGION
+          echo "Clusters in SECONDARY region ($SECONDARY_REGION):"
+          aws eks list-clusters --region $SECONDARY_REGION
 
       - name: Setup kubectl
         uses: azure/setup-kubectl@v3
         with:
           version: 'latest'
 
-      - name: Update kubeconfig for primary
-        run: aws eks --region $PRIMARY_REGION update-kubeconfig --name $CLUSTER_PRIMARY
+      - name: Update kubeconfig for primary (if exists)
+        run: |
+          if aws eks describe-cluster --region $PRIMARY_REGION --name $CLUSTER_PRIMARY >/dev/null 2>&1; then
+            echo "Cluster $CLUSTER_PRIMARY found in $PRIMARY_REGION. Updating kubeconfig..."
+            aws eks update-kubeconfig --region $PRIMARY_REGION --name $CLUSTER_PRIMARY
+            kubectl apply -f terraform/nginx-deployment.yaml
+            kubectl get pods -n default -o wide
+          else
+            echo "Cluster $CLUSTER_PRIMARY not found in $PRIMARY_REGION. Skipping."
+          fi
 
-      - name: Deploy nginx to primary
-        run: kubectl apply -f terraform/nginx-deployment.yaml
-
-      - name: Verify nginx in primary
-        run: kubectl get pods -n default -o wide
-
-      - name: Update kubeconfig for secondary
-        run: aws eks --region $SECONDARY_REGION update-kubeconfig --name $CLUSTER_SECONDARY
-
-      - name: Deploy nginx to secondary
-        run: kubectl apply -f terraform/nginx-deployment.yaml
-
-      - name: Verify nginx in secondary
-        run: kubectl get pods -n default -o wide
+      - name: Update kubeconfig for secondary (if exists)
+        run: |
+          if aws eks describe-cluster --region $SECONDARY_REGION --name $CLUSTER_SECONDARY >/dev/null 2>&1; then
+            echo "Cluster $CLUSTER_SECONDARY found in $SECONDARY_REGION. Updating kubeconfig..."
+            aws eks update-kubeconfig --region $SECONDARY_REGION --name $CLUSTER_SECONDARY
+            kubectl apply -f terraform/nginx-deployment.yaml
+            kubectl get pods -n default -o wide
+          else
+            echo "Cluster $CLUSTER_SECONDARY not found in $SECONDARY_REGION. Skipping."
+          fi
