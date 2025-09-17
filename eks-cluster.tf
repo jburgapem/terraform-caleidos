@@ -18,11 +18,10 @@ module "eks_primary" {
     }
   }
 
-  # Evitar crear KMS y CloudWatch logs
-  create_kms_key              = false
-  cluster_log_group_enabled   = false
-  manage_aws_auth             = true
-  enable_irsa                 = true
+  create_kms_key            = false
+  cluster_log_group_enabled = false
+  manage_aws_auth           = true
+  enable_irsa               = true
 }
 
 module "eks_secondary" {
@@ -44,9 +43,3 @@ module "eks_secondary" {
       instance_types = ["t3.medium"]
     }
   }
-
-  create_kms_key              = false
-  cluster_log_group_enabled   = false
-  manage_aws_auth             = true
-  enable_irsa                 = true
-}
