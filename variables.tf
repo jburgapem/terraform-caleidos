@@ -1,12 +1,20 @@
-variable "primary_region" {
-  default = "us-east-1"
-}
-variable "secondary_region" {
-  default = "us-west-2"
-}
 variable "cluster_name" {
+  type    = string
   default = "acme-eks"
 }
-variable "vpc_cidr" {
-  default = "10.0.0.0/16"
+
+variable "primary_vpc_id" {
+  type = string
+}
+
+variable "primary_private_subnets" {
+  type = list(string)
+}
+
+variable "secondary_vpc_id" {
+  type = string
+}
+
+variable "secondary_private_subnets" {
+  type = list(string)
 }
