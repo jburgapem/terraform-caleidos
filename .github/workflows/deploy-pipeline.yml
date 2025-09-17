@@ -5,21 +5,16 @@ on:
     branches:
       - main
 
-env:
-  PRIMARY_REGION: us-east-1
-  SECONDARY_REGION: us-west-2
-  CLUSTER_NAME: acme-eks
-  PRIMARY_VPC_ID: vpc-xxxxxxxx
-  PRIMARY_PRIVATE_SUBNETS: '["subnet-aaaaaaa","subnet-bbbbbbb"]'
-  SECONDARY_VPC_ID: vpc-yyyyyyyy
-  SECONDARY_PRIVATE_SUBNETS: '["subnet-ccccccc","subnet-ddddddd"]'
-
 jobs:
-  terraform:
+  terraform-deploy:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
+      id-token: write   # necesario para OIDC
       contents: read
+    env:
+      PRIMARY_REGION: us-east-1
+      SECONDARY_REGION: us-west-2
+      CLUSTER_NAME: acme-eks
 
     steps:
       - name: Checkout repository
@@ -37,21 +32,13 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.7.6
+          terraform_version: latest
 
       - name: Terraform Init
         run: terraform init
 
       - name: Terraform Plan
-        run: |
-          terraform plan \
-            -var "primary_vpc_id=${{ env.PRIMARY_VPC_ID }}" \
-            -var "primary_private_subnets=${{ env.PRIMARY_PRIVATE_SUBNETS }}" \
-            -var "secondary_vpc_id=${{ env.SECONDARY_VPC_ID }}" \
-            -var "secondary_private_subnets=${{ env.SECONDARY_PRIVATE_SUBNETS }}" \
-            -var "cluster_name=${{ env.CLUSTER_NAME }}" \
-            -out=tfplan
+        run: terraform plan -input=false
 
       - name: Terraform Apply
-        run: |
-          terraform apply -auto-approve tfplan
+        run: terraform apply -auto-approve
