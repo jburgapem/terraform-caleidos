@@ -8,23 +8,21 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: dev
-    env:
-      PRIMARY_REGION: us-east-1
-      SECONDARY_REGION: us-west-2
-      CLUSTER_PRIMARY: acme-eks-primary
-      CLUSTER_SECONDARY: acme-eks-secondary
-
+    permissions:
+      id-token: write   # 👈 necesario para OIDC
+      contents: read
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
+      - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.PRIMARY_REGION }}
+          role-to-assume: arn:aws:iam::351247743848:oidc-provider/token.actions.githubusercontent.com   # 👈 ARN del rol que creaste
+          aws-region: us-east-1
+
+      - name: Debug identity
+        run: aws sts get-caller-identity
 
       - name: Debug AWS Identity
         run: aws sts get-caller-identity
