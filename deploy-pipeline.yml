@@ -11,6 +11,12 @@ jobs:
     permissions:
       id-token: write   # 👈 necesario para OIDC
       contents: read
+    env:
+      PRIMARY_REGION: us-east-1
+      SECONDARY_REGION: us-west-2
+      CLUSTER_PRIMARY: acme-eks-primary
+      CLUSTER_SECONDARY: acme-eks-secondary
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -18,11 +24,8 @@ jobs:
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::351247743848:oidc-provider/token.actions.githubusercontent.com   # 👈 ARN del rol que creaste
-          aws-region: us-east-1
-
-      - name: Debug identity
-        run: aws sts get-caller-identity
+          role-to-assume: arn:aws:iam::351247743848:role/GitHubOIDCRole   # 👈 Usa el ARN del rol, no del provider
+          aws-region: ${{ env.PRIMARY_REGION }}
 
       - name: Debug AWS Identity
         run: aws sts get-caller-identity
@@ -46,9 +49,6 @@ jobs:
 
       - name: Deploy nginx to secondary
         run: kubectl apply -f terraform/nginx-deployment.yaml
-
-      - name: Verify nginx in secondary
-        run: kubectl get pods -n default -o wide
 
       - name: Verify nginx in secondary
         run: kubectl get pods -n default -o wide
