@@ -12,7 +12,6 @@ module "eks_primary" {
   create_cloudwatch_log_group      = false
   create_kms_key                   = false
   attach_cluster_encryption_policy = false
-  encryption_config                = []
 
   eks_managed_node_groups = {
     default = {
@@ -38,7 +37,6 @@ module "eks_secondary" {
   create_cloudwatch_log_group      = false
   create_kms_key                   = false
   attach_cluster_encryption_policy = false
-  encryption_config                = []
 
   eks_managed_node_groups = {
     default = {
