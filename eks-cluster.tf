@@ -10,8 +10,7 @@ module "eks_primary" {
 
   # 🔧 Correcciones
   create_cloudwatch_log_group = false
-  create_kms_key              = false
-  encryption_config           = null   # 👈 evita el error
+  create_kms_key              = false   # 👈 evita el error de KMS
 
   eks_managed_node_groups = {
     default = {
@@ -35,8 +34,7 @@ module "eks_secondary" {
 
   # 🔧 Correcciones
   create_cloudwatch_log_group = false
-  create_kms_key              = false
-  encryption_config           = null   # 👈 evita el error
+  create_kms_key              = false   # 👈 evita el error de KMS
 
   eks_managed_node_groups = {
     default = {
