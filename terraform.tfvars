@@ -1,5 +1,4 @@
-primary_vpc_id          = "vpc-0abc123456789def0"
-primary_private_subnets = ["subnet-0123456789abcdef0", "subnet-0fedcba9876543210"]
-
-secondary_vpc_id          = "vpc-0fedcba9876543210"
-secondary_private_subnets = ["subnet-0abcdef1234567890", "subnet-0987654321fedcba0"]
+# Variables no longer needed since VPCs and subnets are now created directly in network.tf
+primary_region = "us-east-1"
+secondary_region = "us-east-2"
+cluster_name = "acme-eks"
