@@ -66,10 +66,16 @@ module "eks_secondary" {
   # Node groups
   eks_managed_node_groups = {
     default = {
-      min_size       = 1
-      max_size       = 4
-      desired_size   = 2
-      instance_types = ["t3.medium"]
+      name                   = "fp-default"
+      pod_execution_role_arn = aws_iam_role.fargate_secondary.arn
+      selectors = [
+        { namespace = "default" },
+        { namespace = "kube-system" }
+      ]
+      subnet_ids = [
+        aws_subnet.secondary_private_a.id,
+        aws_subnet.secondary_private_b.id
+      ]
     }
   }
 
