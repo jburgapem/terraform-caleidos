@@ -18,7 +18,7 @@ module "eks_primary" {
     }
   }
 
-  create_kms_key = false
+  create_kms_key = true
   enable_irsa    = true
 }
 
@@ -42,6 +42,6 @@ module "eks_secondary" {
     }
   }
 
-  create_kms_key = false
+  create_kms_key = true
   enable_irsa    = true
 }

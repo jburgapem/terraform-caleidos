@@ -10,9 +10,11 @@ terraform {
 provider "aws" {
   alias  = "primary"
   region = var.primary_region
+  profile = "jen"
 }
 
 provider "aws" {
   alias  = "secondary"
   region = var.secondary_region
+  profile = "jen"
 }
