@@ -9,16 +9,14 @@ module "eks_primary" {
     aws = aws.primary
   }
 
-  cluster = {
-    name    = "${var.cluster_name}-primary"
-    version = var.eks_version
-  }
+  cluster_name    = "${var.cluster_name}-primary"
+  cluster_version = var.eks_version
 
   vpc_id     = var.primary_vpc_id
   subnet_ids = var.primary_private_subnets
 
   cluster_security_group_id = aws_security_group.eks_primary_cluster.id
-  node_security_group_ids   = [aws_security_group.eks_primary_nodes.id]
+  node_security_group_id    = aws_security_group.eks_primary_nodes.id
 
   eks_managed_node_groups = {
     default = {
@@ -30,8 +28,9 @@ module "eks_primary" {
   }
 
   create_kms_key = true
-  kms_key_arn    = module.kms_primary.key_arn
-  enable_irsa    = true
+  # If you want encryption, use cluster_encryption_config here
+
+  enable_irsa = true
 
   tags = var.tags
 }
