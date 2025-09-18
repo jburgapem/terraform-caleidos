@@ -94,39 +94,14 @@ module "eks_secondary" {
   ]
 
   cluster_security_group_id = aws_security_group.eks_secondary_cluster.id
-  #node_security_group_ids   = [aws_security_group.eks_secondary_nodes.id]
-
-  managed_node_groups = {
-    default = {
-      desired_capacity = 2
-      max_capacity     = 4
-      min_capacity     = 1
-      instance_types   = ["t3.medium"]
-
-      scaling_config = {
-        min_size     = 1
-        max_size     = 4
-        desired_size = 2
-      }
-
-      tags = {
-        Environment = "prod"
-        Role        = "worker"
-      }
-    }
-  }
 
   fargate_profiles = {
     default = {
-      name                 = "fp-default"
+      name                   = "fp-default"
       pod_execution_role_arn = module.iam_role_fargate_secondary.arn
       selectors = [
-        {
-          namespace = "default"
-        },
-        {
-          namespace = "kube-system"
-        }
+        { namespace = "default" },
+        { namespace = "kube-system" }
       ]
       subnet_ids = [
         aws_subnet.secondary_private_a.id,
@@ -136,13 +111,6 @@ module "eks_secondary" {
   }
 
   enable_irsa = true
-
-  encryption_config = [
-    {
-      resources    = ["secrets"]
-      provider_arn = module.kms_secondary.key_arn
-    }
-  ]
 
   tags = {
     Environment = "prod"
