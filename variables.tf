@@ -15,3 +15,13 @@ variable "cluster_name" {
   type        = string
   default     = "acme-eks"
 }
+
+variable "primary_vpc_id" {
+  description = "VPC ID for the primary EKS cluster"
+  type        = string
+}
+
+variable "primary_private_subnets" {
+  description = "Private subnet IDs for the primary EKS cluster"
+  type        = list(string)
+}
