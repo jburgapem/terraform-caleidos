@@ -1,43 +1,37 @@
+# Nombres y regiones
 variable "cluster_name" {
-  description = "Nombre base de los clusters"
+  description = "Nombre base del cluster EKS"
   type        = string
-  default     = "acme-eks"
 }
 
 variable "primary_region" {
   description = "Región del cluster primario"
   type        = string
-  default     = "us-east-1"
 }
 
 variable "secondary_region" {
   description = "Región del cluster secundario"
   type        = string
-  default     = "us-west-2"
 }
 
+# VPC y subnets
 variable "primary_vpc_id" {
-  description = "ID de la VPC primaria"
+  description = "ID del VPC primario"
   type        = string
 }
 
 variable "primary_private_subnets" {
-  description = "Subnets privadas primarias"
+  description = "Subnets privadas del VPC primario"
   type        = list(string)
 }
 
 variable "secondary_vpc_id" {
-  description = "ID de la VPC secundaria"
+  description = "ID del VPC secundario"
   type        = string
 }
 
 variable "secondary_private_subnets" {
-  description = "Subnets privadas secundarias"
+  description = "Subnets privadas del VPC secundario"
   type        = list(string)
 }
 
-variable "create_kms_key" {
-  description = "Crear key KMS para cifrado de cluster"
-  type        = bool
-  default     = false
-}

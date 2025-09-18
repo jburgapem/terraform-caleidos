@@ -1,6 +1,3 @@
-#####################################################
-# eks.tf
-#####################################################
 module "eks_primary" {
   source          = "terraform-aws-modules/eks/aws"
   version         = "20.13.0"
@@ -21,8 +18,8 @@ module "eks_primary" {
     }
   }
 
-  create_kms_key = var.create_kms_key
   enable_irsa    = true
+  create_kms_key = false
 }
 
 module "eks_secondary" {
@@ -45,6 +42,6 @@ module "eks_secondary" {
     }
   }
 
-  create_kms_key = var.create_kms_key
   enable_irsa    = true
+  create_kms_key = false
 }
