@@ -41,7 +41,6 @@ module "eks_secondary" {
     }
   }
 
-  create_kms_key = true
+  create_kms_key = false  # <-- deshabilitado
   enable_irsa    = true
-  cluster_security_group_id = aws_security_group.eks_secondary.id
 }
