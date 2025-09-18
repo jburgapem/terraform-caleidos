@@ -6,8 +6,8 @@ module "eks_primary" {
   version = "21.3.1"
   providers = { aws = aws.primary }
 
-  cluster_name    = "${var.cluster_name}-primary"
-  cluster_version = "1.29"
+  eks_cluster_name    = "${var.cluster_name}-primary"
+  eks_cluster_version = "1.29"
 
   vpc_id     = aws_vpc.primary.id
   subnet_ids = [
