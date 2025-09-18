@@ -60,7 +60,10 @@ resource "aws_eks_node_group" "primary_default" {
     Role        = "primary-worker"
   }
 
-  depends_on = [module.eks_primary]
+  depends_on = [
+    module.eks_primary,
+    aws_iam_role.eks_node_group
+  ]
 }
 
 # ------------------------------
@@ -125,6 +128,9 @@ resource "aws_eks_node_group" "secondary_default" {
     Role        = "secondary-worker"
   }
 
-  depends_on = [module.eks_secondary]
+  depends_on = [
+    module.eks_secondary,
+    aws_iam_role.eks_node_group
+  ]
 }
 
