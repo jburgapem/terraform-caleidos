@@ -18,8 +18,15 @@ module "eks_primary" {
     }
   }
 
+<<<<<<< HEAD
   create_kms_key = true
   enable_irsa    = true
+=======
+  # Evitar crear KMS y CloudWatch logs
+  create_kms_key            = false
+  cluster_log_group_enabled = false
+  enable_irsa               = true
+>>>>>>> main
 }
 
 module "eks_secondary" {
@@ -42,6 +49,12 @@ module "eks_secondary" {
     }
   }
 
+<<<<<<< HEAD
   create_kms_key = true
   enable_irsa    = true
+=======
+  create_kms_key            = false
+  cluster_log_group_enabled = false
+  enable_irsa               = true
+>>>>>>> main
 }
