@@ -1,13 +1,11 @@
+# ---------- Security Groups ----------
+
 resource "aws_security_group" "eks_primary" {
-  provider = aws.primary
+  name   = "${var.cluster_name}-primary-sg"
   vpc_id = aws_vpc.primary.id
-  name   = "eks-primary-sg"
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+
+  description = "EKS primary cluster SG"
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -17,15 +15,11 @@ resource "aws_security_group" "eks_primary" {
 }
 
 resource "aws_security_group" "eks_secondary" {
-  provider = aws.secondary
+  name   = "${var.cluster_name}-secondary-sg"
   vpc_id = aws_vpc.secondary.id
-  name   = "eks-secondary-sg"
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+
+  description = "EKS secondary cluster SG"
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -33,3 +27,4 @@ resource "aws_security_group" "eks_secondary" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+
