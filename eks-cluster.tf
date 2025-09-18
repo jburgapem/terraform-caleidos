@@ -3,7 +3,7 @@
 # ------------------------------
 module "eks_primary" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "20.13.0"
+  version = "21.3.1"
   providers = { aws = aws.primary }
 
   cluster_name    = "${var.cluster_name}-primary"
@@ -68,7 +68,7 @@ resource "aws_eks_node_group" "primary_default" {
 # ------------------------------
 module "eks_secondary" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "20.13.0"
+  version = "21.3.1"
   providers = { aws = aws.secondary }
 
   cluster_name    = "${var.cluster_name}-secondary"
