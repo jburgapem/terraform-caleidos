@@ -59,6 +59,8 @@ resource "aws_eks_node_group" "primary_default" {
     Project     = "acme"
     Role        = "primary-worker"
   }
+
+  depends_on = [module.eks_primary]
 }
 
 # ------------------------------
@@ -122,5 +124,7 @@ resource "aws_eks_node_group" "secondary_default" {
     Project     = "acme"
     Role        = "secondary-worker"
   }
+
+  depends_on = [module.eks_secondary]
 }
 
