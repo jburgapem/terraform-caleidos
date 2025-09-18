@@ -11,15 +11,12 @@ module "eks_primary" {
   cluster_name    = "${var.cluster_name}-primary"
   cluster_version = "1.29"
 
-  vpc_id     = aws_vpc.primary.id
-  subnet_ids = [
-    aws_subnet.primary_private_a.id,
-    aws_subnet.primary_private_b.id
-  ]
+  vpc_id     = var.primary_vpc_id
+  subnet_ids = var.primary_private_subnets
 
   # Seguridad
-  cluster_security_group_id             = aws_security_group.eks_primary_cluster.id
-  cluster_additional_security_group_ids = [aws_security_group.eks_primary_nodes.id]
+  cluster_security_group_id             = var.eks_primary_cluster_sg
+  cluster_additional_security_group_ids = [var.eks_primary_nodes_sg]
 
   # Encriptación con su KMS dedicado
   cluster_encryption_config = {
@@ -53,15 +50,12 @@ module "eks_secondary" {
   cluster_name    = "${var.cluster_name}-secondary"
   cluster_version = "1.29"
 
-  vpc_id     = aws_vpc.secondary.id
-  subnet_ids = [
-    aws_subnet.secondary_private_a.id,
-    aws_subnet.secondary_private_b.id
-  ]
+  vpc_id     = var.secondary_vpc_id
+  subnet_ids = var.secondary_private_subnets
 
   # Seguridad
-  cluster_security_group_id             = aws_security_group.eks_secondary_cluster.id
-  cluster_additional_security_group_ids = [aws_security_group.eks_secondary_nodes.id]
+  cluster_security_group_id             = var.eks_secondary_cluster_sg
+  cluster_additional_security_group_ids = [var.eks_secondary_nodes_sg]
 
   # Encriptación con su KMS dedicado
   cluster_encryption_config = {
@@ -81,5 +75,6 @@ module "eks_secondary" {
 
   enable_irsa = true
 }
+
 
 

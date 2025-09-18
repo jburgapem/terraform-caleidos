@@ -1,9 +1,18 @@
-cluster_name               = "acme-eks"
-primary_region             = "us-east-2"
-secondary_region           = "us-west-2"
+# Nombre base para los clusters
+cluster_name = "acme-eks"
 
-primary_vpc_id             = "vpc-0abc123456789def0"
-primary_private_subnets    = ["subnet-0123456789abcdef0", "subnet-0fedcba9876543210"]
+# VPCs
+primary_vpc_id     = "vpc-1234567890abcdef0"
+secondary_vpc_id   = "vpc-abcdef0123456789"
 
-secondary_vpc_id           = "vpc-0fedcba9876543210"
-secondary_private_subnets  = ["subnet-0a1b2c3d4e5f6g7h8", "subnet-0h8g7f6e5d4c3b2a1"]
+# Subnets privadas
+primary_private_subnets   = ["subnet-11111111", "subnet-22222222"]
+secondary_private_subnets = ["subnet-33333333", "subnet-44444444"]
+
+# Security groups
+eks_primary_cluster_sg   = "sg-aaaa1111"
+eks_primary_nodes_sg     = "sg-bbbb2222"
+eks_secondary_cluster_sg = "sg-cccc3333"
+eks_secondary_nodes_sg   = "sg-dddd4444"
+
+
