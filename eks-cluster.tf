@@ -40,6 +40,27 @@ module "eks_primary" {
   }
 }
 
+resource "aws_eks_node_group" "primary_default" {
+  cluster_name    = module.eks_primary.cluster_name
+  node_group_name = "primary-default"
+  node_role_arn   = module.eks_primary.node_group_iam_role_arn
+  subnet_ids      = [
+    aws_subnet.primary_private_a.id,
+    aws_subnet.primary_private_b.id
+  ]
+  scaling_config {
+    desired_size = 2
+    max_size     = 4
+    min_size     = 1
+  }
+  instance_types = ["t3.medium"]
+  tags = {
+    Environment = "prod"
+    Project     = "acme"
+    Role        = "primary-worker"
+  }
+}
+
 # ------------------------------
 # EKS Secondary Cluster
 # ------------------------------
@@ -79,6 +100,27 @@ module "eks_secondary" {
   tags = {
     Environment = "prod"
     Project     = "acme"
+  }
+}
+
+resource "aws_eks_node_group" "secondary_default" {
+  cluster_name    = module.eks_secondary.cluster_name
+  node_group_name = "secondary-default"
+  node_role_arn   = module.eks_secondary.node_group_iam_role_arn
+  subnet_ids      = [
+    aws_subnet.secondary_private_a.id,
+    aws_subnet.secondary_private_b.id
+  ]
+  scaling_config {
+    desired_size = 2
+    max_size     = 4
+    min_size     = 1
+  }
+  instance_types = ["t3.medium"]
+  tags = {
+    Environment = "prod"
+    Project     = "acme"
+    Role        = "secondary-worker"
   }
 }
 
