@@ -25,3 +25,13 @@ variable "secondary_region" {
   type        = string
   default     = "us-west-2"
 }
+
+variable "primary_vpc_id" {
+  description = "VPC ID for the primary cluster"
+  type        = string
+}
+
+variable "primary_private_subnets" {
+  description = "Private subnets for the primary cluster"
+  type        = list(string)
+}
