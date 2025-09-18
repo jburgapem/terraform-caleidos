@@ -43,7 +43,7 @@ module "eks_primary" {
 resource "aws_eks_node_group" "primary_default" {
   cluster_name    = module.eks_primary.cluster_name
   node_group_name = "primary-default"
-  node_role_arn   = module.eks_primary.node_group_iam_role_arn
+  node_role_arn   = aws_iam_role.eks_node_group.arn
   subnet_ids      = [
     aws_subnet.primary_private_a.id,
     aws_subnet.primary_private_b.id
@@ -106,7 +106,7 @@ module "eks_secondary" {
 resource "aws_eks_node_group" "secondary_default" {
   cluster_name    = module.eks_secondary.cluster_name
   node_group_name = "secondary-default"
-  node_role_arn   = module.eks_secondary.node_group_iam_role_arn
+  node_role_arn   = aws_iam_role.eks_node_group.arn
   subnet_ids      = [
     aws_subnet.secondary_private_a.id,
     aws_subnet.secondary_private_b.id
