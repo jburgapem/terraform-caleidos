@@ -27,3 +27,5 @@ data "aws_iam_policy_document" "fargate_assume_role_policy" {
     }
   }
 }
+
+pod_execution_role_arn = aws_iam_role.fargate_secondary.arn
