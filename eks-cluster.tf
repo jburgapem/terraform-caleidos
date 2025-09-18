@@ -1,130 +1,75 @@
-# ------------------------------
-# EKS Primary Cluster
-# ------------------------------
+#####################################
+# Cluster EKS Primario
+#####################################
 module "eks_primary" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "21.3.1"
-  providers = { aws = aws.primary }
+  version = "20.13.0"
 
-  cluster_name    = "${var.cluster_name}-primary"
-  cluster_version = "1.29"
+  providers = {
+    aws = aws.primary
+  }
 
-  vpc_id     = aws_vpc.primary.id
-  subnet_ids = [
-    aws_subnet.primary_private_a.id,
-    aws_subnet.primary_private_b.id
-  ]
+  cluster = {
+    name    = "${var.cluster_name}-primary"
+    version = var.eks_version
+  }
 
-  fargate_profiles = {
+  vpc_id     = var.primary_vpc_id
+  subnet_ids = var.primary_private_subnets
+
+  cluster_security_group_id = aws_security_group.eks_primary_cluster.id
+  node_security_group_ids   = [aws_security_group.eks_primary_nodes.id]
+
+  eks_managed_node_groups = {
     default = {
-      name                   = "fp-default"
-      pod_execution_role_arn = aws_iam_role.fargate_primary.arn
-      selectors = [
-        { namespace = "default" },
-        { namespace = "kube-system" }
-      ]
-      subnet_ids = [
-        aws_subnet.primary_private_a.id,
-        aws_subnet.primary_private_b.id
-      ]
+      desired_size   = 2
+      max_size       = 4
+      min_size       = 1
+      instance_types = ["t3.medium"]
     }
   }
 
-  enable_irsa = true
+  create_kms_key = true
+  kms_key_arn    = module.kms_primary.key_arn
+  enable_irsa    = true
 
-  tags = {
-    Environment = "prod"
-    Project     = "acme"
-  }
+  tags = var.tags
 }
 
-resource "aws_eks_node_group" "primary_default" {
-  cluster_name    = module.eks_primary.cluster_name
-  node_group_name = "primary-default"
-  node_role_arn   = aws_iam_role.eks_node_group.arn
-  subnet_ids      = [
-    aws_subnet.primary_private_a.id,
-    aws_subnet.primary_private_b.id
-  ]
-  scaling_config {
-    desired_size = 2
-    max_size     = 4
-    min_size     = 1
-  }
-  instance_types = ["t3.medium"]
-  tags = {
-    Environment = "prod"
-    Project     = "acme"
-    Role        = "primary-worker"
-  }
-  depends_on = [
-    module.eks_primary,
-    aws_iam_role.eks_node_group
-  ]
-}
-
-# ------------------------------
-# EKS Secondary Cluster
-# ------------------------------
+#####################################
+# Cluster EKS Secundario
+#####################################
 module "eks_secondary" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "21.3.1"
-  providers = { aws = aws.secondary }
+  version = "20.13.0"
 
-  cluster_name    = "${var.cluster_name}-secondary"
-  cluster_version = "1.29"
+  providers = {
+    aws = aws.secondary
+  }
 
-  vpc_id     = aws_vpc.secondary.id
-  subnet_ids = [
-    aws_subnet.secondary_private_a.id,
-    aws_subnet.secondary_private_b.id
-  ]
+  cluster = {
+    name    = "${var.cluster_name}-secondary"
+    version = var.eks_version
+  }
 
-  fargate_profiles = {
+  vpc_id     = var.secondary_vpc_id
+  subnet_ids = var.secondary_private_subnets
+
+  cluster_security_group_id = aws_security_group.eks_secondary_cluster.id
+  node_security_group_ids   = [aws_security_group.eks_secondary_nodes.id]
+
+  eks_managed_node_groups = {
     default = {
-      name                   = "fp-default"
-      pod_execution_role_arn = aws_iam_role.fargate_secondary.arn
-      selectors = [
-        { namespace = "default" },
-        { namespace = "kube-system" }
-      ]
-      subnet_ids = [
-        aws_subnet.secondary_private_a.id,
-        aws_subnet.secondary_private_b.id
-      ]
+      desired_size   = 2
+      max_size       = 4
+      min_size       = 1
+      instance_types = ["t3.medium"]
     }
   }
 
-  enable_irsa = true
+  create_kms_key = true
+  kms_key_arn    = module.kms_secondary.key_arn
+  enable_irsa    = true
 
-  tags = {
-    Environment = "prod"
-    Project     = "acme"
-  }
+  tags = var.tags
 }
-
-resource "aws_eks_node_group" "secondary_default" {
-  cluster_name    = module.eks_secondary.cluster_name
-  node_group_name = "secondary-default"
-  node_role_arn   = aws_iam_role.eks_node_group.arn
-  subnet_ids      = [
-    aws_subnet.secondary_private_a.id,
-    aws_subnet.secondary_private_b.id
-  ]
-  scaling_config {
-    desired_size = 2
-    max_size     = 4
-    min_size     = 1
-  }
-  instance_types = ["t3.medium"]
-  tags = {
-    Environment = "prod"
-    Project     = "acme"
-    Role        = "secondary-worker"
-  }
-  depends_on = [
-    module.eks_secondary,
-    aws_iam_role.eks_node_group
-  ]
-}
-
