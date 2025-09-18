@@ -62,7 +62,7 @@ module "eks_secondary" {
   fargate_profiles = {
     default = {
       name                   = "fp-default"
-      pod_execution_role_arn = module.iam_role_fargate_secondary.arn
+      pod_execution_role_arn = aws_iam_role.fargate_secondary.arn
       selectors = [
         { namespace = "default" },
         { namespace = "kube-system" }
