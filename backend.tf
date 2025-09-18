@@ -1,9 +1,49 @@
-terraform {
-  backend "s3" {
-    bucket = "backend-state-jn-dev"
-    key    = "dev/eks.tfstate"
-    region = "us-east-2"
+module "eks_primary" {
+  source          = "terraform-aws-modules/eks/aws"
+  version         = "20.13.0"
+  providers       = { aws = aws.primary }
+
+  cluster_name    = "${var.cluster_name}-primary"
+  cluster_version = "1.29"
+
+  vpc_id     = aws_vpc.primary.id
+  subnet_ids = [aws_subnet.primary_private_a.id, aws_subnet.primary_private_b.id]
+
+  eks_managed_node_groups = {
+    default = {
+      desired_size   = 2
+      max_size       = 4
+      min_size       = 1
+      instance_types = ["t3.medium"]
+    }
   }
 
-  required_version = ">= 1.5.0"
+  create_kms_key = true
+  kms_key_arn    = module.kms_primary.key_arn
+  enable_irsa    = true
+}
+
+module "eks_secondary" {
+  source          = "terraform-aws-modules/eks/aws"
+  version         = "20.13.0"
+  providers       = { aws = aws.secondary }
+
+  cluster_name    = "${var.cluster_name}-secondary"
+  cluster_version = "1.29"
+
+  vpc_id     = aws_vpc.secondary.id
+  subnet_ids = [aws_subnet.secondary_private_a.id, aws_subnet.secondary_private_b.id]
+
+  eks_managed_node_groups = {
+    default = {
+      desired_size   = 2
+      max_size       = 4
+      min_size       = 1
+      instance_types = ["t3.medium"]
+    }
+  }
+
+  create_kms_key = true
+  kms_key_arn    = module.kms_secondary.key_arn
+  enable_irsa    = true
 }

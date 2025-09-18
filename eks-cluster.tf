@@ -9,6 +9,10 @@ module "eks_primary" {
   vpc_id     = aws_vpc.primary.id
   subnet_ids = [aws_subnet.primary_private_a.id, aws_subnet.primary_private_b.id]
 
+  cluster_security_group_id = aws_security_group.eks_primary_cluster.id
+  node_security_group_ids   = [aws_security_group.eks_primary_nodes.id]
+}
+
   eks_managed_node_groups = {
     default = {
       desired_size   = 2
@@ -33,6 +37,10 @@ module "eks_secondary" {
 
   vpc_id     = aws_vpc.secondary.id
   subnet_ids = [aws_subnet.secondary_private_a.id, aws_subnet.secondary_private_b.id]
+
+  cluster_security_group_id = aws_security_group.eks_secondary_cluster.id
+  node_security_group_ids   = [aws_security_group.eks_secondary_nodes.id]
+}
 
   eks_managed_node_groups = {
     default = {
