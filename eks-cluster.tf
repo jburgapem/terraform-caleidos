@@ -21,7 +21,7 @@ module "eks_primary" {
   cluster_security_group_id             = aws_security_group.eks_primary_cluster.id
   cluster_additional_security_group_ids = [aws_security_group.eks_primary_nodes.id]
 
-  # Encriptación con KMS
+  # Encriptación con su KMS dedicado
   cluster_encryption_config = {
     resources        = ["secrets"]
     provider_key_arn = module.kms_primary.key_arn
@@ -63,7 +63,7 @@ module "eks_secondary" {
   cluster_security_group_id             = aws_security_group.eks_secondary_cluster.id
   cluster_additional_security_group_ids = [aws_security_group.eks_secondary_nodes.id]
 
-  # Encriptación con KMS
+  # Encriptación con su KMS dedicado
   cluster_encryption_config = {
     resources        = ["secrets"]
     provider_key_arn = module.kms_secondary.key_arn
