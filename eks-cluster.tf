@@ -6,8 +6,8 @@ module "eks_primary" {
   cluster_name    = "${var.cluster_name}-primary"
   cluster_version = "1.29"
 
-  vpc_id     = var.primary_vpc_id
-  subnet_ids = var.primary_private_subnets
+  vpc_id     = aws_vpc.primary.id
+  subnet_ids = [aws_subnet.primary_private_a.id, aws_subnet.primary_private_b.id]
 
   eks_managed_node_groups = {
     default = {
@@ -30,8 +30,8 @@ module "eks_secondary" {
   cluster_name    = "${var.cluster_name}-secondary"
   cluster_version = "1.29"
 
-  vpc_id     = var.secondary_vpc_id
-  subnet_ids = var.secondary_private_subnets
+  vpc_id     = aws_vpc.secondary.id
+  subnet_ids = [aws_subnet.secondary_private_a.id, aws_subnet.secondary_private_b.id]
 
   eks_managed_node_groups = {
     default = {
