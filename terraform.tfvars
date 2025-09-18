@@ -15,4 +15,5 @@ eks_primary_nodes_sg     = "sg-bbbb2222"
 eks_secondary_cluster_sg = "sg-cccc3333"
 eks_secondary_nodes_sg   = "sg-dddd4444"
 
-
+primary_region  = "us-east-1"
+secondary_region = "us-west-2"

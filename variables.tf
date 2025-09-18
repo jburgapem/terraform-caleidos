@@ -50,3 +50,12 @@ variable "eks_secondary_nodes_sg" {
   description = "Security Group para los nodos secundarios"
   type        = string
 }
+variable "primary_region" {
+  description = "Región AWS para el cluster primario"
+  type        = string
+}
+
+variable "secondary_region" {
+  description = "Región AWS para el cluster secundario"
+  type        = string
+}
