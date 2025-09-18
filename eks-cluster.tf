@@ -16,7 +16,7 @@ module "eks_primary" {
   ]
 
   cluster_security_group_id = aws_security_group.eks_primary_cluster.id
-  node_security_group_ids   = [aws_security_group.eks_primary_nodes.id]
+  #node_security_group_ids   = [aws_security_group.eks_primary_nodes.id]
 
   # Managed Node Groups con auto-escalado
   managed_node_groups = {
@@ -94,7 +94,7 @@ module "eks_secondary" {
   ]
 
   cluster_security_group_id = aws_security_group.eks_secondary_cluster.id
-  node_security_group_ids   = [aws_security_group.eks_secondary_nodes.id]
+  #node_security_group_ids   = [aws_security_group.eks_secondary_nodes.id]
 
   managed_node_groups = {
     default = {
