@@ -9,6 +9,17 @@ resource "aws_kms_alias" "primary" {
   target_key_id = aws_kms_key.primary.key_id
 }
 
+resource "aws_kms_key" "secondary" {
+  description             = "KMS key for EKS secondary cluster"
+  deletion_window_in_days = 10
+  enable_key_rotation     = true
+}
+
+resource "aws_kms_alias" "secondary" {
+  name          = "alias/${var.cluster_name}-secondary-key"
+  target_key_id = aws_kms_key.secondary.key_id
+}
+
 module "kms_secondary" {
   source     = "terraform-aws-modules/kms/aws"
   version    = "3.1.0"
