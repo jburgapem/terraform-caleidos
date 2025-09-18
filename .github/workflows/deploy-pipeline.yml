@@ -34,8 +34,12 @@ jobs:
         with:
           terraform_version: latest
 
-      - name: Terraform Init
-        run: terraform init --upgrade
+      - name: Clean Terraform cache
+        run: |
+          rm -rf .terraform .terraform.lock.hcl
+
+      - name: Terraform Init (force upgrade)
+        run: terraform init -upgrade
 
       - name: Terraform Plan
         run: terraform plan -input=false
