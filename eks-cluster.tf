@@ -3,7 +3,7 @@
 #####################################
 module "eks_primary" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "20.13.0"
+  version = "21.3.0"
   providers = {
     aws = aws.primary
   }
@@ -42,7 +42,7 @@ module "eks_primary" {
 #####################################
 module "eks_secondary" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "20.13.0"
+  version = "21.3.0"
   providers = {
     aws = aws.secondary
   }
