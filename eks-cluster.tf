@@ -20,7 +20,7 @@ module "eks_primary" {
   fargate_profiles = {
     default = {
       name                   = "fp-default"
-      pod_execution_role_arn = module.iam_role_fargate_primary.arn
+      pod_execution_role_arn = aws_iam_role.fargate_primary.arn
       selectors = [
         { namespace = "default" },
         { namespace = "kube-system" }
