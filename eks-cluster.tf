@@ -86,37 +86,67 @@ module "eks_secondary" {
 
   cluster_name    = "${var.cluster_name}-secondary"
   cluster_version = "1.29"
-  vpc_id          = aws_vpc.secondary.id
-  subnet_ids      = [
+
+  vpc_id     = aws_vpc.secondary.id
+  subnet_ids = [
     aws_subnet.secondary_private_a.id,
     aws_subnet.secondary_private_b.id
   ]
+
   cluster_security_group_id = aws_security_group.eks_secondary_cluster.id
-  enable_irsa               = true
+  #node_security_group_ids   = [aws_security_group.eks_secondary_nodes.id]
+
+  managed_node_groups = {
+    default = {
+      desired_capacity = 2
+      max_capacity     = 4
+      min_capacity     = 1
+      instance_types   = ["t3.medium"]
+
+      scaling_config = {
+        min_size     = 1
+        max_size     = 4
+        desired_size = 2
+      }
+
+      tags = {
+        Environment = "prod"
+        Role        = "worker"
+      }
+    }
+  }
+
+  fargate_profiles = {
+    default = {
+      name                 = "fp-default"
+      pod_execution_role_arn = module.iam_role_fargate_secondary.arn
+      selectors = [
+        {
+          namespace = "default"
+        },
+        {
+          namespace = "kube-system"
+        }
+      ]
+      subnet_ids = [
+        aws_subnet.secondary_private_a.id,
+        aws_subnet.secondary_private_b.id
+      ]
+    }
+  }
+
+  enable_irsa = true
+
+  encryption_config = [
+    {
+      resources    = ["secrets"]
+      provider_arn = module.kms_secondary.key_arn
+    }
+  ]
+
   tags = {
     Environment = "prod"
     Project     = "acme"
   }
 }
-
-resource "aws_eks_node_group" "secondary_default" {
-  cluster_name    = module.eks_secondary.cluster_name
-  node_group_name = "default"
-  node_role_arn   = module.eks_secondary.node_group_iam_role_arn
-  subnet_ids      = [
-    aws_subnet.secondary_private_a.id,
-    aws_subnet.secondary_private_b.id
-  ]
-  scaling_config {
-    desired_size = 2
-    max_size     = 4
-    min_size     = 1
-  }
-  instance_types = ["t3.medium"]
-  tags = {
-    Environment = "prod"
-    Role        = "worker"
-  }
-}
-# ...existing code...ß
 
