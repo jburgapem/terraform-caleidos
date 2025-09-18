@@ -38,15 +38,6 @@ jobs:
         run: |
           rm -rf .terraform .terraform.lock.hcl
 
-      - name: Terraform Init (force upgrade)
-        run: terraform init -upgrade
-
-      - name: Terraform Plan
-        run: terraform plan -input=false
-
-      - name: Terraform Apply
-        run: terraform apply -auto-approve
-
       - name: Ensure AWS provider version
         run: |
           echo 'terraform {
@@ -58,3 +49,12 @@ jobs:
             }
             required_version = ">= 1.3.0"
           }' > versions.tf
+
+      - name: Terraform Init (force upgrade)
+        run: terraform init -upgrade
+
+      - name: Terraform Plan
+        run: terraform plan -input=false
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
