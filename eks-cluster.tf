@@ -15,8 +15,6 @@ module "eks_primary" {
     aws_subnet.primary_private_b.id
   ]
 
-  cluster_security_group_id = aws_security_group.eks_primary_cluster.id
-
   fargate_profiles = {
     default = {
       name                   = "fp-default"
@@ -59,7 +57,6 @@ resource "aws_eks_node_group" "primary_default" {
     Project     = "acme"
     Role        = "primary-worker"
   }
-
   depends_on = [
     module.eks_primary,
     aws_iam_role.eks_node_group
@@ -82,8 +79,6 @@ module "eks_secondary" {
     aws_subnet.secondary_private_a.id,
     aws_subnet.secondary_private_b.id
   ]
-
-  cluster_security_group_id = aws_security_group.eks_secondary_cluster.id
 
   fargate_profiles = {
     default = {
@@ -127,7 +122,6 @@ resource "aws_eks_node_group" "secondary_default" {
     Project     = "acme"
     Role        = "secondary-worker"
   }
-
   depends_on = [
     module.eks_secondary,
     aws_iam_role.eks_node_group
